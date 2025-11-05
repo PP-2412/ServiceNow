@@ -18,19 +18,58 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Client-side validation
+    if (!formData.email.trim()) {
+      setError('Email is required');
+      return;
+    }
+
+    if (!formData.password) {
+      setError('Password is required');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await login(formData);
+      const loginData = {
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password
+      };
+
+      console.log('Attempting login...'); // Debug log
+      const response = await login(loginData);
+      console.log('Login successful:', response.data); // Debug log
+      
       loginUser(response.data.token, response.data.user);
       navigate('/calendar');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      console.error('Login error:', err); // Debug log
+      console.error('Error response:', err.response); // Debug log
+      
+      // Handle different error types
+      if (err.response) {
+        // Server responded with error
+        if (err.response.status === 400) {
+          setError('Invalid email or password');
+        } else {
+          setError(err.response.data?.message || 'Login failed. Please try again.');
+        }
+      } else if (err.request) {
+        // Request made but no response
+        setError('Cannot connect to server. Please check your internet connection.');
+      } else {
+        // Something else happened
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -51,7 +90,9 @@ const Login = () => {
             name="email"
             value={formData.email}
             onChange={handleChange}
+            placeholder="Enter your email"
             required
+            disabled={loading}
           />
         </div>
 
@@ -63,7 +104,9 @@ const Login = () => {
             name="password"
             value={formData.password}
             onChange={handleChange}
+            placeholder="Enter your password"
             required
+            disabled={loading}
           />
         </div>
 
