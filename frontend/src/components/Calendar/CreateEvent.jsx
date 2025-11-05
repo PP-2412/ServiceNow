@@ -21,7 +21,16 @@ const CreateEvent = ({ onEventCreated }) => {
     setLoading(true);
 
     try {
-      await createEvent(formData);
+      // Ensure dates are properly formatted as ISO strings
+      const eventData = {
+        title: formData.title,
+        startTime: new Date(formData.startTime).toISOString(),
+        endTime: new Date(formData.endTime).toISOString()
+      };
+      
+      console.log('Submitting event data:', eventData); // Debug log
+      
+      await createEvent(eventData);
       setFormData({
         title: '',
         startTime: '',
@@ -29,6 +38,7 @@ const CreateEvent = ({ onEventCreated }) => {
       });
       onEventCreated();
     } catch (err) {
+      console.error('Create event error:', err); // Debug log
       alert(err.response?.data?.message || 'Failed to create event');
     } finally {
       setLoading(false);
